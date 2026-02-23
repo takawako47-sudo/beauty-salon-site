@@ -15,22 +15,22 @@ export default function Info() {
                 <div className={styles.details}>
                     <dl className={styles.dl}>
                         <dt>店名</dt>
-                        <dd>BEAUTY SALON (ビューティーサロン)</dd>
+                        <dd>美容室skip</dd>
 
                         <dt>住所</dt>
-                        <dd>〒000-0000<br />東京都渋谷区美容エステ町1-2-3</dd>
+                        <dd>熊本県上天草市大矢野町登立534-38</dd>
 
                         <dt>アクセス</dt>
-                        <dd>渋谷駅〇〇口から徒歩5分<br />お車でお越しの場合は近隣のコインパーキングをご利用ください。</dd>
+                        <dd>詳細はお電話にてお問い合わせください。</dd>
 
                         <dt>電話番号</dt>
-                        <dd>03-0000-0000</dd>
+                        <dd>080-4474-5569</dd>
 
                         <dt>営業時間</dt>
-                        <dd>10:00 - 20:00 (最終受付 18:30)<br />定休日：火曜日</dd>
+                        <dd>AM 9:00 - PM 6:00<br />※ 早朝・遅出は別料金にて対応可能</dd>
 
                         <dt>支払い方法</dt>
-                        <dd>現金、各種クレジットカード、一部電子マネー、QRコード決済に対応</dd>
+                        <dd>現金、スマホ決済（楽天ペイ）、PAYPAYに対応</dd>
                     </dl>
                 </div>
 

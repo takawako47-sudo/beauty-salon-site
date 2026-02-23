@@ -34,6 +34,7 @@ export default function Header() {
                         <li><Link href="/services" onClick={closeMenu}>Service</Link></li>
                         <li><Link href="/pricing" onClick={closeMenu}>Pricing</Link></li>
                         <li><Link href="/gallery" onClick={closeMenu}>Gallery</Link></li>
+                        <li><Link href="/reserve" onClick={closeMenu}>Reserve</Link></li>
                         <li><Link href="/info" onClick={closeMenu}>Info</Link></li>
                         <li><Link href="/contact" onClick={closeMenu}>Contact</Link></li>
                     </ul>

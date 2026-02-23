@@ -14,38 +14,46 @@ export default function Pricing() {
                 分かりやすくシンプルな料金体系を心がけております。※価格はすべて税込です。
             </p>
 
-            <h2 style={{ marginBottom: '20px', fontSize: '1.2rem', color: 'var(--accent-color)' }}>フェイシャル</h2>
+            <h2 style={{ marginBottom: '20px', fontSize: '1.2rem', color: 'var(--accent-color)' }}>カット・カラー</h2>
             <table className={styles.pricingTable}>
                 <tbody>
                     <tr>
-                        <td>ベーシックケア<span className={styles.subText}>クレンジング・マッサージ・パック (45分)</span></td>
-                        <td className={styles.priceCol}>¥8,800</td>
+                        <td>カット<span className={styles.subText}>ブロー込</span></td>
+                        <td className={styles.priceCol}>¥2,420</td>
                     </tr>
                     <tr>
-                        <td>エイジングケア<span className={styles.subText}>最新機器使用・リフトアップ (60分)</span></td>
-                        <td className={styles.priceCol}>¥13,200</td>
+                        <td>前髪カット</td>
+                        <td className={styles.priceCol}>¥880</td>
                     </tr>
                     <tr>
-                        <td>毛穴洗浄コース<span className={styles.subText}>超音波洗浄・ビタミンC導入 (60分)</span></td>
-                        <td className={styles.priceCol}>¥11,000</td>
+                        <td>カラー<span className={styles.subText}>シャンプー・ブロー込 / ショート</span></td>
+                        <td className={styles.priceCol}>¥3,630</td>
+                    </tr>
+                    <tr>
+                        <td>カラー<span className={styles.subText}>シャンプー・ブロー込 / ミディアム・ロング</span></td>
+                        <td className={styles.priceCol}>¥5,980〜</td>
                     </tr>
                 </tbody>
             </table>
 
-            <h2 style={{ marginBottom: '20px', fontSize: '1.2rem', color: 'var(--accent-color)' }}>ボディ</h2>
+            <h2 style={{ marginBottom: '20px', fontSize: '1.2rem', color: 'var(--accent-color)' }}>パーマ・縮毛矯正</h2>
             <table className={styles.pricingTable}>
                 <tbody>
                     <tr>
-                        <td>アロマリンパマッサージ<span className={styles.subText}>全身 (60分)</span></td>
-                        <td className={styles.priceCol}>¥12,000</td>
+                        <td>パーマ<span className={styles.subText}>シャンプー・カット・ブロー込（ノーマル）</span></td>
+                        <td className={styles.priceCol}>¥8,550</td>
                     </tr>
                     <tr>
-                        <td>アロマリンパマッサージ<span className={styles.subText}>全身＋ヘッドスパ (90分)</span></td>
-                        <td className={styles.priceCol}>¥16,500</td>
+                        <td>パーマ<span className={styles.subText}>シャンプー・カット・ブロー込（クリニック）</span></td>
+                        <td className={styles.priceCol}>¥9,480</td>
                     </tr>
                     <tr>
-                        <td>最新ハイフ (HIFU)<span className={styles.subText}>気になる部位 집중 (45分)</span></td>
-                        <td className={styles.priceCol}>¥15,000</td>
+                        <td>縮毛矯正<span className={styles.subText}>シャンプー・カット・ブロー込 / ショート</span></td>
+                        <td className={styles.priceCol}>¥8,980</td>
+                    </tr>
+                    <tr>
+                        <td>縮毛矯正<span className={styles.subText}>シャンプー・カット・ブロー込 / ミディアム・ロング</span></td>
+                        <td className={styles.priceCol}>¥9,980〜</td>
                     </tr>
                 </tbody>
             </table>
