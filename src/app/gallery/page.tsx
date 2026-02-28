@@ -21,10 +21,10 @@ type GalleryItem = {
 async function getGalleryImages(): Promise<GalleryItem[]> {
     try {
         const apiKey = process.env.GOOGLE_API_KEY;
-        const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
+        const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID || '1r1AWR-fQyGQ7KM_hD6MhItLHwg4mSCes';
 
         if (!apiKey || !folderId) {
-            console.warn('Google Drive APIの環境変数（GOOGLE_API_KEY または GOOGLE_DRIVE_FOLDER_ID）が設定されていません。');
+            console.warn('Google Drive APIの環境変数（GOOGLE_API_KEY）が設定されていません。');
             return [];
         }
 

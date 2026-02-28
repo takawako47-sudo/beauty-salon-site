@@ -35,10 +35,16 @@ export default function Info() {
                 </div>
 
                 <div className={styles.mapWrapper}>
-                    <div className={styles.mapPlaceholder}>
-                        Google Map 埋め込みエリア
-                        {/* 実際にMapを埋め込む場合はiframeを配置 */}
-                    </div>
+                    <iframe
+                        src="https://maps.google.com/maps?q=美容室スキップ,熊本県上天草市大矢野町登立534-38&t=&z=16&ie=UTF8&iwloc=&output=embed"
+                        width="100%"
+                        height="400"
+                        style={{ border: 0 }}
+                        allowFullScreen
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                        title="美容室SKIP Google Map"
+                    ></iframe>
                 </div>
             </div>
         </div>
