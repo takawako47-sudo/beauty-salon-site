@@ -6,14 +6,14 @@ export default function Footer() {
         <footer className={styles.footer}>
             <div className={styles.inner}>
                 <div className={styles.brand}>
-                    <Link href="/" className={styles.logo}>
-                        BEAUTY SALON
+                    <Link href="/info" className={styles.logo}>
+                        美容室SKIP
                     </Link>
                     <div className={styles.address}>
-                        <p>〒000-0000</p>
-                        <p>東京都渋谷区美容エステ町1-2-3</p>
-                        <p>TEL: 03-0000-0000</p>
-                        <p>営業時間: 10:00 - 20:00 (火曜定休)</p>
+                        <p>〒869-3601</p>
+                        <p>熊本県上天草市大矢野町登立534-38</p>
+                        <p>TEL: 080-4474-5569</p>
+                        <p>営業時間: 9:00 - 18:00 (月曜、第一日曜定休)</p>
                     </div>
                 </div>
 
@@ -21,23 +21,22 @@ export default function Footer() {
                     <div className={styles.col}>
                         <h3>Menu</h3>
                         <ul>
-                            <li><Link href="/services">Service</Link></li>
                             <li><Link href="/pricing">Pricing</Link></li>
                             <li><Link href="/gallery">Gallery</Link></li>
+                            <li><Link href="/reserve">Reserve</Link></li>
                         </ul>
                     </div>
                     <div className={styles.col}>
                         <h3>Information</h3>
                         <ul>
                             <li><Link href="/info">Store Info</Link></li>
-                            <li><Link href="/contact">Contact</Link></li>
                         </ul>
                     </div>
                 </div>
             </div>
 
             <div className={styles.copyright}>
-                &copy; {new Date().getFullYear()} BEAUTY SALON. All Rights Reserved.
+                &copy; {new Date().getFullYear()} 美容室SKIP. All Rights Reserved.
             </div>
         </footer>
     );

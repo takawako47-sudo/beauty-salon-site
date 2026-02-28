@@ -59,7 +59,6 @@ export default function Pricing() {
             </table>
 
             <p style={{ textAlign: 'center', fontSize: '0.9rem', color: '#666', marginTop: '30px' }}>
-                ※ 初回のお客様は全メニュー20%OFFでご利用いただけます。<br />
                 ※ 各種クレジットカード・QRコード決済に対応しております。
             </p>
         </div>
