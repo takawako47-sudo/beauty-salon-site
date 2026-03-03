@@ -26,14 +26,21 @@ export async function getCalendarEvents(): Promise<CalendarEvent[]> {
         return [];
     }
 
-    // 本日の開始と終了（JST +09:00 を明記）
+    // 本日から14日分を取得（JST +09:00 を明記）
     const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const date = String(now.getDate()).padStart(2, '0');
+    const jstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+    const year = jstNow.getUTCFullYear();
+    const month = String(jstNow.getUTCMonth() + 1).padStart(2, '0');
+    const date = String(jstNow.getUTCDate()).padStart(2, '0');
 
     const timeMin = `${year}-${month}-${date}T00:00:00+09:00`;
-    const timeMax = `${year}-${month}-${date}T23:59:59+09:00`;
+
+    // 14日後を計算
+    const futureDate = new Date(jstNow.getTime() + 14 * 24 * 60 * 60 * 1000);
+    const fYear = futureDate.getUTCFullYear();
+    const fMonth = String(futureDate.getUTCMonth() + 1).padStart(2, '0');
+    const fDate = String(futureDate.getUTCDate()).padStart(2, '0');
+    const timeMax = `${fYear}-${fMonth}-${fDate}T23:59:59+09:00`;
 
     // timeZone=Asia/Tokyo を追加
     const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?key=${apiKey}&timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}&singleEvents=true&orderBy=startTime&timeZone=Asia/Tokyo`;
@@ -62,8 +69,8 @@ export async function getCalendarEvents(): Promise<CalendarEvent[]> {
  */
 export interface AvailabilitySlot {
     time: string; // "09:00"
-    status: 'holiday' | 'full' | 'available';
-    label: string; // "🗓 定休日", "🔴 満席", "🟢 空き"
+    status: 'holiday' | 'full' | 'available' | 'unrecorded';
+    label: string; // "🗓 定休日", "🔴 満席", "🟢 空き", "ー"
 }
 
 /**
@@ -93,7 +100,7 @@ export function getAvailabilitySlots(events: CalendarEvent[], targetDate: Date):
             const slotEnd = new Date(slotStart);
             slotEnd.setMinutes(slotStart.getMinutes() + 30);
 
-            let status: 'holiday' | 'full' | 'available' = 'full';
+            let status: 'holiday' | 'full' | 'available' | 'unrecorded' = 'full';
             let label = '🔴 満席';
 
             if (isHoliday) {
@@ -116,19 +123,19 @@ export function getAvailabilitySlots(events: CalendarEvent[], targetDate: Date):
                 });
 
                 // 優先順位 2: 「満席」が含まれるか
-                if (overlappingEvents.some(e => e.summary.includes('満席'))) {
+                if (overlappingEvents.some(e => e.summary && e.summary.includes('満席'))) {
                     status = 'full';
                     label = '🔴 満席';
                 }
                 // 優先順位 3: 「空き」または「空きあり」が含まれるか
-                else if (overlappingEvents.some(e => e.summary.includes('空き') || e.summary.includes('空きあり'))) {
+                else if (overlappingEvents.some(e => e.summary && (e.summary.includes('空き') || e.summary.includes('空きあり')))) {
                     status = 'available';
                     label = '🟢 空き';
                 }
-                // 優先順位 4: それ以外はデフォルト満席
+                // 優先順位 4: それ以外は「未記入」
                 else {
-                    status = 'full';
-                    label = '🔴 満席';
+                    status = 'unrecorded';
+                    label = 'ー';
                 }
             }
 
