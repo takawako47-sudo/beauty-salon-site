@@ -1,0 +1,3 @@
+steps:
+  - run: echo 'Test steps to see if everything builds before creating script components' 
+    shell: sh
