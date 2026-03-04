@@ -79,8 +79,7 @@ export function getAvailabilitySlots(events: CalendarEvent[], targetDate: Date):
     const endHour = 18;
     const endMinute = 30;
 
-    // 実行環境（GitHub Actions=UTC / ブラウザ=JST等）に依存しないよう、
-    // DateオブジェクトからJSTの年月日文字列を抽出する
+    // 実行環境に依存しないJST年月日を取得
     const parts = new Intl.DateTimeFormat('ja-JP', {
         timeZone: 'Asia/Tokyo',
         year: 'numeric',
@@ -93,20 +92,18 @@ export function getAvailabilitySlots(events: CalendarEvent[], targetDate: Date):
     const day = parts.find(p => p.type === 'day')?.value;
     const datePrefix = `${year}-${month}-${day}`;
 
-    // 1. 当日の判定範囲（JST 00:00 〜 23:59）
-    const dayStart = new Date(`${datePrefix}T00:00:00+09:00`).getTime();
-    const dayEnd = new Date(`${datePrefix}T23:59:59+09:00`).getTime();
+    // 当日の判定範囲
+    const dayJstStart = new Date(`${datePrefix}T00:00:00+09:00`).getTime();
+    const dayJstEnd = new Date(`${datePrefix}T23:59:59+09:00`).getTime();
 
-    const isHoliday = events.some(event => {
+    // 当日のイベントを抽出
+    const dayEvents = events.filter(event => {
         const eStartStr = event.start.dateTime || (event.start.date ? `${event.start.date}T00:00:00+09:00` : null);
         const eEndStr = event.end.dateTime || (event.end.date ? `${event.end.date}T23:59:59+09:00` : null);
         if (!eStartStr || !eEndStr) return false;
-
-        const eventStart = new Date(eStartStr).getTime();
-        const eventEnd = new Date(eEndStr).getTime();
-
-        const overlapsWithDay = eventStart < dayEnd && eventEnd > dayStart;
-        return overlapsWithDay && event.summary && (event.summary.includes('定休日') || event.summary.includes('店休日'));
+        const eStart = new Date(eStartStr).getTime();
+        const eEnd = new Date(eEndStr).getTime();
+        return eStart < dayJstEnd && eEnd > dayJstStart;
     });
 
     for (let h = startHour; h <= endHour; h++) {
@@ -114,39 +111,41 @@ export function getAvailabilitySlots(events: CalendarEvent[], targetDate: Date):
             if (h === endHour && m > endMinute) break;
 
             const timeLabel = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-
-            // JST明示的な文字列から比較用のタイムスタンプを作成
             const slotStart = new Date(`${datePrefix}T${timeLabel}:00+09:00`).getTime();
             const slotEnd = slotStart + 30 * 60 * 1000;
+
+            // このスロットに重なっているイベントを抽出
+            const overlappingEvents = dayEvents.filter(event => {
+                const eStartStr = event.start.dateTime || (event.start.date ? `${event.start.date}T00:00:00+09:00` : null);
+                const eEndStr = event.end.dateTime || (event.end.date ? `${event.end.date}T23:59:59+09:00` : null);
+                const eStart = new Date(eStartStr!).getTime();
+                const eEnd = new Date(eEndStr!).getTime();
+                return slotStart < eEnd && eStart < slotEnd;
+            });
+
+            // キーワード判定
+            const summaries = overlappingEvents.map(e => e.summary || "");
+            const hasAvailable = summaries.some(s => s.includes("空き") || s.includes("あり") || s.includes("○"));
+            const hasFull = summaries.some(s => s.includes("満席") || s.includes("🈵") || s.includes("×"));
+            const hasClosed = summaries.some(s => s.includes("定休日") || s.includes("店休"));
 
             let status: 'holiday' | 'full' | 'available' | 'unrecorded' = 'unrecorded';
             let label = 'ー';
 
-            if (isHoliday) {
+            // 優先順位 1: 「空き」があれば最優先
+            if (hasAvailable) {
+                status = 'available';
+                label = '🟢 空き';
+            }
+            // 優先順位 2: 「満席」があれば赤色
+            else if (hasFull) {
+                status = 'full';
+                label = '🔴 満席';
+            }
+            // 優先順位 3: 「定休日」があれば定休日
+            else if (hasClosed) {
                 status = 'holiday';
                 label = '🗓 定休日';
-            } else {
-                const overlappingEvents = events.filter(event => {
-                    const eStartStr = event.start.dateTime || (event.start.date ? `${event.start.date}T00:00:00+09:00` : null);
-                    const eEndStr = event.end.dateTime || (event.end.date ? `${event.end.date}T23:59:59+09:00` : null);
-                    if (!eStartStr || !eEndStr) return false;
-
-                    const eventStart = new Date(eStartStr).getTime();
-                    const eventEnd = new Date(eEndStr).getTime();
-
-                    return slotStart < eventEnd && eventStart < slotEnd;
-                });
-
-                // 優先順位 1: 満席 (Summaryの中に「満席」または「🈵」がある場合)
-                if (overlappingEvents.some(e => e.summary && (e.summary.includes('満席') || e.summary.includes('🈵')))) {
-                    status = 'full';
-                    label = '🔴 満席';
-                }
-                // 優先順位 2: 空き (Summaryの中に「空き」または「空きあり」がある場合)
-                else if (overlappingEvents.some(e => e.summary && (e.summary.includes('空き') || e.summary.includes('空きあり')))) {
-                    status = 'available';
-                    label = '🟢 空き';
-                }
             }
 
             slots.push({ time: timeLabel, status, label });
@@ -155,5 +154,7 @@ export function getAvailabilitySlots(events: CalendarEvent[], targetDate: Date):
 
     return slots;
 }
+
+// v2026-03-05-KEYWORD_PRIORITY
 
 // v2026-03-04-FINAL
