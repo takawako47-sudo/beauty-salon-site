@@ -43,6 +43,10 @@ export default function ReservationSystem({ initialEvents }: ReservationSystemPr
     return (
         <div style={{ maxWidth: "800px", margin: "0 auto", backgroundColor: "#fff", padding: "30px", borderRadius: "10px", boxShadow: "0 4px 6px rgba(0,0,0,0.05)" }}>
             <h1 style={{ fontSize: "1.8rem", marginBottom: "20px", color: "#333" }}>予約状況（空き状況）</h1>
+            {/* デバッグ用: イベントが正しく取得できているか確認 */}
+            <p style={{ fontSize: "0.8rem", color: "#ccc", marginBottom: "10px" }}>
+                Debug: 加算されたイベント数 {initialEvents.length}
+            </p>
 
             {/* 日付選択タブ */}
             <div style={{
