@@ -84,15 +84,13 @@ export function getAvailabilitySlots(events: CalendarEvent[], targetDate: Date):
     const endHour = 18;
     const endMinute = 30;
 
-    // targetDateをYYYY-MM-DD形式に（JST基準）
-    const jstDate = new Date(targetDate.getTime() + 9 * 60 * 60 * 1000); // 念のため補正
-    const year = jstDate.getUTCFullYear();
-    const month = String(jstDate.getUTCMonth() + 1).padStart(2, '0');
-    const date = String(jstDate.getUTCDate()).padStart(2, '0');
+    // targetDate（ブラウザやサーバーのローカルDate）からJSTの年月日を取得
+    const year = targetDate.getFullYear();
+    const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+    const date = String(targetDate.getDate()).padStart(2, '0');
     const datePrefix = `${year}-${month}-${date}`;
 
-    // 1. 当日のいずれかのイベントに「定休日」が含まれるか判定
-    // 当日の判定範囲を厳密にする
+    // 1. 当日のいずれかのイベントに「定休日」または「店休日」が含まれるか判定
     const dayStart = new Date(`${datePrefix}T00:00:00+09:00`).getTime();
     const dayEnd = new Date(`${datePrefix}T23:59:59+09:00`).getTime();
 
@@ -103,9 +101,8 @@ export function getAvailabilitySlots(events: CalendarEvent[], targetDate: Date):
         const eStart = new Date(eStartStr).getTime();
         const eEnd = new Date(eEndStr).getTime();
 
-        // 当日に重なっているか 且つ 「定休日」
         const overlapsWithDay = dayStart < eEnd && eStart < dayEnd;
-        return overlapsWithDay && event.summary && event.summary.includes('定休日');
+        return overlapsWithDay && event.summary && (event.summary.includes('定休日') || event.summary.includes('店休日'));
     });
 
     for (let h = startHour; h <= endHour; h++) {
@@ -114,7 +111,7 @@ export function getAvailabilitySlots(events: CalendarEvent[], targetDate: Date):
 
             const timeLabel = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 
-            // JST明示的な日時文字列からDateを生成 (s < E_e && E_s < e 判定用)
+            // 明示的なJST時刻文字列からDateを作成
             const slotStart = new Date(`${datePrefix}T${timeLabel}:00+09:00`);
             const slotEnd = new Date(slotStart.getTime() + 30 * 60 * 1000);
 
@@ -136,7 +133,7 @@ export function getAvailabilitySlots(events: CalendarEvent[], targetDate: Date):
                     return slotStart.getTime() < eEnd.getTime() && eStart.getTime() < slotEnd.getTime();
                 });
 
-                if (overlappingEvents.some(e => e.summary && e.summary.includes('満席'))) {
+                if (overlappingEvents.some(e => e.summary && (e.summary.includes('満席') || e.summary.includes('🈵')))) {
                     status = 'full';
                     label = '🔴 満席';
                 }
