@@ -8,11 +8,18 @@ interface ReservationSystemProps {
 }
 
 export default function ReservationSystem({ initialEvents }: ReservationSystemProps) {
-    const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+    // 日付のみを管理するため、時刻を00:00:00に固定したDateオブジェクトを使用
+    const getStartOfDay = (date: Date) => {
+        const d = new Date(date.getTime());
+        d.setHours(0, 0, 0, 0);
+        return d;
+    };
+
+    const [selectedDate, setSelectedDate] = useState<Date>(getStartOfDay(new Date()));
     const [showOnlyAvailable, setShowOnlyAvailable] = useState(false);
 
     // 本日〜14日間
-    const today = new Date();
+    const today = getStartOfDay(new Date());
     const dateList = Array.from({ length: 14 }, (_, i) => {
         const d = new Date(today.getTime());
         d.setDate(d.getDate() + i);
