@@ -120,7 +120,9 @@ export function getAvailabilitySlots(events: CalendarEvent[], targetDate: Date):
                 const eEndStr = event.end.dateTime || (event.end.date ? `${event.end.date}T23:59:59+09:00` : null);
                 const eStart = new Date(eStartStr!).getTime();
                 const eEnd = new Date(eEndStr!).getTime();
-                return slotStart < eEnd && eStart < slotEnd;
+
+                // 厳密な判定: 予定の開始・終了時刻と、30分枠が「完全に一致」または「枠が予定に含まれる」場合のみ抽出
+                return eStart <= slotStart && slotEnd <= eEnd;
             });
 
             // キーワード判定
