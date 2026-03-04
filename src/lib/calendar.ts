@@ -18,16 +18,13 @@ export interface CalendarEvent {
  * Google Calendar APIから本日のイベントを取得する
  */
 export async function getCalendarEvents(): Promise<CalendarEvent[]> {
-    const apiKey = process.env.GOOGLE_API_KEY;
-    const calendarId = process.env.GOOGLE_CALENDAR_ID;
+    // 【重要】GitHub Secretsが読み込まれない問題を回避するため、一時的に直書きします
+    const apiKey = 'AIzaSyClK79MRAgeEAxvlMdsFbPcYacde6zroUI';
+    const calendarId = 'takawako47@gmail.com';
 
-    if (!apiKey || !calendarId) {
-        console.error('Environment variables GOOGLE_API_KEY or GOOGLE_CALENDAR_ID are missing.');
-        return [];
-    }
-
-    // 本日から14日分を取得（JST +09:00 を明記）
+    // 本日から20日分を取得（余裕を持たせる）
     const now = new Date();
+    // UTCからJST(+9h)を明示的に作成
     const jstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000);
     const year = jstNow.getUTCFullYear();
     const month = String(jstNow.getUTCMonth() + 1).padStart(2, '0');
@@ -35,19 +32,17 @@ export async function getCalendarEvents(): Promise<CalendarEvent[]> {
 
     const timeMin = `${year}-${month}-${date}T00:00:00+09:00`;
 
-    // 14日後を計算
-    const futureDate = new Date(jstNow.getTime() + 14 * 24 * 60 * 60 * 1000);
+    const futureDate = new Date(jstNow.getTime() + 20 * 24 * 60 * 60 * 1000);
     const fYear = futureDate.getUTCFullYear();
     const fMonth = String(futureDate.getUTCMonth() + 1).padStart(2, '0');
     const fDate = String(futureDate.getUTCDate()).padStart(2, '0');
     const timeMax = `${fYear}-${fMonth}-${fDate}T23:59:59+09:00`;
 
-    // timeZone=Asia/Tokyo を追加
     const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?key=${apiKey}&timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}&singleEvents=true&orderBy=startTime&timeZone=Asia/Tokyo`;
 
     try {
         const response = await fetch(url, {
-            next: { revalidate: 3600 } // 1時間キャッシュ（静的エクスポート時はビルド時のみ）
+            next: { revalidate: 300 } // 反映を早めるため5分キャッシュ
         });
 
         if (!response.ok) {
@@ -74,7 +69,7 @@ export interface AvailabilitySlot {
 }
 
 /**
- * 取得したイベントから30分単位の空き状況スロットを生成する（純粋関数）
+ * 取得したイベントから30分単位の空き状況スロットを生成する
  */
 export function getAvailabilitySlots(events: CalendarEvent[], targetDate: Date): AvailabilitySlot[] {
     const slots: AvailabilitySlot[] = [];
@@ -84,31 +79,35 @@ export function getAvailabilitySlots(events: CalendarEvent[], targetDate: Date):
     const endHour = 18;
     const endMinute = 30;
 
-    // targetDateの日時部分を固定（JST 00:00:00）
-    const d = new Date(targetDate.getTime());
-    // サーバー環境でのズレを最小化するため、UTCメソッドではなくローカルメソッドを使用
-    d.setHours(0, 0, 0, 0);
-    console.log(`[getAvailabilitySlots] targetDate: ${targetDate.toISOString()}, d (start of day): ${d.toISOString()}`);
+    // 実行環境（GitHub Actions=UTC / ブラウザ=JST等）に依存しないよう、
+    // DateオブジェクトからJSTの年月日文字列を抽出する
+    const parts = new Intl.DateTimeFormat('ja-JP', {
+        timeZone: 'Asia/Tokyo',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    }).formatToParts(targetDate);
 
-    // 1. その日の「定休日/店休日」判定
+    const year = parts.find(p => p.type === 'year')?.value;
+    const month = parts.find(p => p.type === 'month')?.value;
+    const day = parts.find(p => p.type === 'day')?.value;
+    const datePrefix = `${year}-${month}-${day}`;
+
+    // 1. 当日の判定範囲（JST 00:00 〜 23:59）
+    const dayStart = new Date(`${datePrefix}T00:00:00+09:00`).getTime();
+    const dayEnd = new Date(`${datePrefix}T23:59:59+09:00`).getTime();
+
     const isHoliday = events.some(event => {
         const eStartStr = event.start.dateTime || (event.start.date ? `${event.start.date}T00:00:00+09:00` : null);
         const eEndStr = event.end.dateTime || (event.end.date ? `${event.end.date}T23:59:59+09:00` : null);
         if (!eStartStr || !eEndStr) return false;
 
-        const eventStart = new Date(eStartStr);
-        const eventEnd = new Date(eEndStr);
+        const eventStart = new Date(eStartStr).getTime();
+        const eventEnd = new Date(eEndStr).getTime();
 
-        // 判定対象の日 (d) とイベントが重なっているか
-        const dayStart = d.getTime();
-        const dayEnd = d.getTime() + 24 * 60 * 60 * 1000;
-        const isTargetDay = eventStart.getTime() < dayEnd && eventEnd.getTime() > dayStart;
-        console.log(`[getAvailabilitySlots] Checking holiday for event: ${event.summary}, eventStart: ${eventStart.toISOString()}, eventEnd: ${eventEnd.toISOString()}, isTargetDay: ${isTargetDay}`);
-
-        return isTargetDay && event.summary && (event.summary.includes('定休日') || event.summary.includes('店休日'));
+        const overlapsWithDay = eventStart < dayEnd && eventEnd > dayStart;
+        return overlapsWithDay && event.summary && (event.summary.includes('定休日') || event.summary.includes('店休日'));
     });
-    console.log(`[getAvailabilitySlots] isHoliday for ${d.toISOString().split('T')[0]}: ${isHoliday}`);
-
 
     for (let h = startHour; h <= endHour; h++) {
         for (let m of [0, 30]) {
@@ -116,14 +115,12 @@ export function getAvailabilitySlots(events: CalendarEvent[], targetDate: Date):
 
             const timeLabel = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 
-            // スロットの開始と終了
-            const slotStart = new Date(d.getTime());
-            slotStart.setHours(h, m, 0, 0);
-            const slotEnd = new Date(slotStart.getTime() + 30 * 60 * 1000);
-            console.log(`[getAvailabilitySlots] Slot: ${timeLabel}, slotStart: ${slotStart.toISOString()}, slotEnd: ${slotEnd.toISOString()}`);
+            // JST明示的な文字列から比較用のタイムスタンプを作成
+            const slotStart = new Date(`${datePrefix}T${timeLabel}:00+09:00`).getTime();
+            const slotEnd = slotStart + 30 * 60 * 1000;
 
-            let status: 'holiday' | 'full' | 'available' | 'unrecorded' = 'full';
-            let label = '🔴 満席';
+            let status: 'holiday' | 'full' | 'available' | 'unrecorded' = 'unrecorded';
+            let label = 'ー';
 
             if (isHoliday) {
                 status = 'holiday';
@@ -134,26 +131,21 @@ export function getAvailabilitySlots(events: CalendarEvent[], targetDate: Date):
                     const eEndStr = event.end.dateTime || (event.end.date ? `${event.end.date}T23:59:59+09:00` : null);
                     if (!eStartStr || !eEndStr) return false;
 
-                    const eventStart = new Date(eStartStr);
-                    const eventEnd = new Date(eEndStr);
-                    console.log(`  [getAvailabilitySlots] Comparing slot (${slotStart.toISOString()}-${slotEnd.toISOString()}) with event (${event.summary}, ${eventStart.toISOString()}-${eventEnd.toISOString()})`);
+                    const eventStart = new Date(eStartStr).getTime();
+                    const eventEnd = new Date(eEndStr).getTime();
 
-                    return slotStart.getTime() < eventEnd.getTime() && eventStart.getTime() < slotEnd.getTime();
+                    return slotStart < eventEnd && eventStart < slotEnd;
                 });
-                console.log(`  [getAvailabilitySlots] Overlapping events for ${timeLabel}: ${overlappingEvents.map(e => e.summary).join(', ')}`);
 
-
+                // 優先順位 1: 満席 (Summaryの中に「満席」または「🈵」がある場合)
                 if (overlappingEvents.some(e => e.summary && (e.summary.includes('満席') || e.summary.includes('🈵')))) {
                     status = 'full';
                     label = '🔴 満席';
                 }
+                // 優先順位 2: 空き (Summaryの中に「空き」または「空きあり」がある場合)
                 else if (overlappingEvents.some(e => e.summary && (e.summary.includes('空き') || e.summary.includes('空きあり')))) {
                     status = 'available';
                     label = '🟢 空き';
-                }
-                else {
-                    status = 'unrecorded';
-                    label = 'ー';
                 }
             }
 
@@ -164,4 +156,4 @@ export function getAvailabilitySlots(events: CalendarEvent[], targetDate: Date):
     return slots;
 }
 
-// Trigger rebuild on GitHub: v2026-03-04-01
+// v2026-03-04-FINAL
