@@ -18,9 +18,13 @@ export interface CalendarEvent {
  * Google Calendar APIから本日のイベントを取得する
  */
 export async function getCalendarEvents(): Promise<CalendarEvent[]> {
-    // デバッグのため、環境変数ではなく直接指定して動作を確認します
-    const apiKey = 'AIzaSyClK79MRAgeEAxvlMdsFbPcYacde6zroUI';
-    const calendarId = 'takawako47@gmail.com';
+    const apiKey = process.env.GOOGLE_API_KEY;
+    const calendarId = process.env.GOOGLE_CALENDAR_ID;
+
+    if (!apiKey || !calendarId) {
+        console.error('Environment variables GOOGLE_API_KEY or GOOGLE_CALENDAR_ID are missing.');
+        return [];
+    }
 
     // 本日から14日分を取得（JST +09:00 を明記）
     const now = new Date();
