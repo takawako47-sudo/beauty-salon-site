@@ -84,21 +84,39 @@ export function getAvailabilitySlots(events: CalendarEvent[], targetDate: Date):
     const endHour = 18;
     const endMinute = 30;
 
+    // targetDateをYYYY-MM-DD形式に（JST基準）
+    const jstDate = new Date(targetDate.getTime() + 9 * 60 * 60 * 1000); // 念のため補正
+    const year = jstDate.getUTCFullYear();
+    const month = String(jstDate.getUTCMonth() + 1).padStart(2, '0');
+    const date = String(jstDate.getUTCDate()).padStart(2, '0');
+    const datePrefix = `${year}-${month}-${date}`;
+
     // 1. 当日のいずれかのイベントに「定休日」が含まれるか判定
-    const isHoliday = events.some(event => event.summary.includes('定休日'));
+    // 当日の判定範囲を厳密にする
+    const dayStart = new Date(`${datePrefix}T00:00:00+09:00`).getTime();
+    const dayEnd = new Date(`${datePrefix}T23:59:59+09:00`).getTime();
+
+    const isHoliday = events.some(event => {
+        const eStartStr = event.start.dateTime || (event.start.date ? `${event.start.date}T00:00:00+09:00` : null);
+        const eEndStr = event.end.dateTime || (event.end.date ? `${event.end.date}T23:59:59+09:00` : null);
+        if (!eStartStr || !eEndStr) return false;
+        const eStart = new Date(eStartStr).getTime();
+        const eEnd = new Date(eEndStr).getTime();
+
+        // 当日に重なっているか 且つ 「定休日」
+        const overlapsWithDay = dayStart < eEnd && eStart < dayEnd;
+        return overlapsWithDay && event.summary && event.summary.includes('定休日');
+    });
 
     for (let h = startHour; h <= endHour; h++) {
         for (let m of [0, 30]) {
-            // 18:30 までループを回す
             if (h === endHour && m > endMinute) break;
 
             const timeLabel = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 
-            // スロットの開始・終了日時オブジェクトを作成 (判定用)
-            const slotStart = new Date(targetDate);
-            slotStart.setHours(h, m, 0, 0);
-            const slotEnd = new Date(slotStart);
-            slotEnd.setMinutes(slotStart.getMinutes() + 30);
+            // JST明示的な日時文字列からDateを生成 (s < E_e && E_s < e 判定用)
+            const slotStart = new Date(`${datePrefix}T${timeLabel}:00+09:00`);
+            const slotEnd = new Date(slotStart.getTime() + 30 * 60 * 1000);
 
             let status: 'holiday' | 'full' | 'available' | 'unrecorded' = 'full';
             let label = '🔴 満席';
@@ -107,32 +125,25 @@ export function getAvailabilitySlots(events: CalendarEvent[], targetDate: Date):
                 status = 'holiday';
                 label = '🗓 定休日';
             } else {
-                // 2 & 3. 時間が重複しているイベントを抽出
                 const overlappingEvents = events.filter(event => {
                     const eStartStr = event.start.dateTime || (event.start.date ? `${event.start.date}T00:00:00+09:00` : null);
                     const eEndStr = event.end.dateTime || (event.end.date ? `${event.end.date}T23:59:59+09:00` : null);
-
                     if (!eStartStr || !eEndStr) return false;
 
                     const eStart = new Date(eStartStr);
                     const eEnd = new Date(eEndStr);
 
-                    // 重複判定: s < E_e && E_s < e
-                    // Dateオブジェクトの比較で行う
                     return slotStart.getTime() < eEnd.getTime() && eStart.getTime() < slotEnd.getTime();
                 });
 
-                // 優先順位 2: 「満席」が含まれるか
                 if (overlappingEvents.some(e => e.summary && e.summary.includes('満席'))) {
                     status = 'full';
                     label = '🔴 満席';
                 }
-                // 優先順位 3: 「空き」または「空きあり」が含まれるか
                 else if (overlappingEvents.some(e => e.summary && (e.summary.includes('空き') || e.summary.includes('空きあり')))) {
                     status = 'available';
                     label = '🟢 空き';
                 }
-                // 優先順位 4: それ以外は「未記入」
                 else {
                     status = 'unrecorded';
                     label = 'ー';
@@ -145,3 +156,5 @@ export function getAvailabilitySlots(events: CalendarEvent[], targetDate: Date):
 
     return slots;
 }
+
+// Trigger rebuild on GitHub: v2026-03-04-01
