@@ -54,12 +54,9 @@ async function getGalleryImages(): Promise<GalleryItem[]> {
                 day: '2-digit',
             });
 
-            // webContentLinkは直接ダウンロードになる場合があるため、表示用にはthumbnailLinkのクエリを外して使うなどの工夫が必要
-            let imageUrl = file.thumbnailLink || '';
-            // thumbnailLinkの "=s220" 等のサイズ指定を外して高画質にする
-            if (imageUrl) {
-                imageUrl = imageUrl.replace(/=s\d+$/, '=s800');
-            }
+            // thumbnailLinkはセッション期限があり、静的エクスポートでは数時間でリンク切れになります。
+            // 永続的な表示のためには、共有済みのファイルIDを使って直接URLを生成します。
+            const imageUrl = `https://drive.google.com/uc?id=${file.id}`;
 
             return {
                 id: file.id || Math.random().toString(),
