@@ -21,8 +21,8 @@ type GalleryItem = {
 
 async function getGalleryImages(): Promise<GalleryItem[]> {
     try {
-        const apiKey = 'AIzaSyClK79MRAgeEAxvlMdsFbPcYacde6zroUI';
-        const folderId = '1r1AWR-fQyGQ7KM_hD6MhItLHwg4mSCes';
+        const apiKey = process.env.GOOGLE_API_KEY || 'AIzaSyClK79MRAgeEAxvlMdsFbPcYacde6zroUI';
+        const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID || '1r1AWR-fQyGQ7KM_hD6MhItLHwg4mSCes';
 
         const drive = google.drive({ version: 'v3', auth: apiKey });
 
@@ -54,7 +54,10 @@ async function getGalleryImages(): Promise<GalleryItem[]> {
             const extension = file.name ? path.extname(file.name) : '.jpg';
             const fileName = `${file.id}${extension}`;
             const filePath = path.join(galleryDir, fileName);
-            const publicPath = `/gallery-images/${fileName}`;
+
+            // GitHub Pages のサブパスを考慮したパス生成
+            const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+            const publicPath = `${basePath}/gallery-images/${fileName}`;
 
             // ファイルがまだ存在しない場合のみダウンロード（ビルド時間の短縮）
             if (!fs.existsSync(filePath)) {
