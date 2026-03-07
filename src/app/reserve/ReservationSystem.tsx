@@ -167,7 +167,7 @@ export default function ReservationSystem({ initialEvents }: ReservationSystemPr
                     ★★★★★
                 </div>
                 <a
-                    href="https://search.google.com/local/writereview?placeid=【Place ID】"
+                    href="https://www.google.com/maps/place/%E7%BE%8E%E5%AE%B9%E5%AE%A4%E3%82%B9%E3%82%AD%E3%83%83%E3%83%97/@32.5975239,130.440539,17z/data=!4m13!1m4!8m3!1e1!3m1!1e1!3m7!1s0x354077173e7872b7:0x91ef36a1662b5838!8m2!3d32.5975194!4d130.4431139!9m1!1b1!16s%2Fg%2F11b5pkl1qy?hl=ja"
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
@@ -196,7 +196,7 @@ export default function ReservationSystem({ initialEvents }: ReservationSystemPr
             }}>
                 {/* LINE ボタン */}
                 <a
-                    href="https://line.me/R/ti/p/【LINE IDやリンク】"
+                    href="https://line.me/ti/p/W_VCXFY3ou"
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
@@ -223,7 +223,7 @@ export default function ReservationSystem({ initialEvents }: ReservationSystemPr
 
                 {/* Instagram ボタン */}
                 <a
-                    href="【InstagramプロフィールURL】"
+                    href="https://www.instagram.com/biyousitu_skip/"
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
