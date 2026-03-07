@@ -7,8 +7,9 @@ export const metadata: Metadata = {
     description: '施術事例やサロンの雰囲気をご紹介します。',
 };
 
-// Next.js (App Router) の静的エクスポートでビルド時に処理する
-// Revalidate を設定しても 'output: export' の場合は静的生成となります。
+import fs from 'fs';
+import path from 'path';
+import axios from 'axios';
 
 type GalleryItem = {
     id: string;
@@ -25,10 +26,17 @@ async function getGalleryImages(): Promise<GalleryItem[]> {
 
         const drive = google.drive({ version: 'v3', auth: apiKey });
 
+        // 保存先ディレクトリの作成
+        const publicDir = path.join(process.cwd(), 'public');
+        const galleryDir = path.join(publicDir, 'gallery-images');
+        if (!fs.existsSync(galleryDir)) {
+            fs.mkdirSync(galleryDir, { recursive: true });
+        }
+
         // フォルダ内の画像ファイルを取得
         const res = await drive.files.list({
             q: `'${folderId}' in parents and mimeType contains 'image/' and trashed = false`,
-            fields: 'files(id, name, createdTime, webContentLink, thumbnailLink)',
+            fields: 'files(id, name, createdTime)',
             orderBy: 'createdTime desc',
             pageSize: 50,
         });
@@ -38,11 +46,34 @@ async function getGalleryImages(): Promise<GalleryItem[]> {
             return [];
         }
 
-        const galleryItems: GalleryItem[] = files.map((file) => {
-            // ファイル名から拡張子を削除してタイトル抽出
-            // 例: "20240101_ハイフ.jpg" -> "20240101_ハイフ" -> 後半を取るなど自由ですが、ここでは拡張子除去をベースにします。
+        const galleryItems: GalleryItem[] = [];
+
+        for (const file of files) {
+            if (!file.id) continue;
+
+            const extension = file.name ? path.extname(file.name) : '.jpg';
+            const fileName = `${file.id}${extension}`;
+            const filePath = path.join(galleryDir, fileName);
+            const publicPath = `/gallery-images/${fileName}`;
+
+            // ファイルがまだ存在しない場合のみダウンロード（ビルド時間の短縮）
+            if (!fs.existsSync(filePath)) {
+                try {
+                    console.log(`Downloading image: ${file.name} (${file.id})`);
+                    // Google Drive APIで画像コンテンツを取得
+                    // NOTE: API Keyでファイルのバイナリを取得するには、別のエンドポイントかオプションが必要な場合があるため
+                    // 公開されている直URLからaxiosで取得する方式を試みます
+                    const downloadUrl = `https://drive.google.com/uc?id=${file.id}&export=download`;
+                    const response = await axios.get(downloadUrl, { responseType: 'arraybuffer' });
+                    fs.writeFileSync(filePath, Buffer.from(response.data));
+                } catch (dlError) {
+                    console.error(`Failed to download ${file.id}:`, dlError);
+                    continue; // 失敗した画像はスキップ
+                }
+            }
+
+            // タイトル抽出
             const rawTitle = file.name ? file.name.replace(/\.[^/.]+$/, '') : '名称未設定';
-            // "_" などの区切りがあれば後半を名前にするというロジック（自由設定）
             const parts = rawTitle.split('_');
             const title = parts.length > 1 ? parts[parts.length - 1] : rawTitle;
 
@@ -54,18 +85,14 @@ async function getGalleryImages(): Promise<GalleryItem[]> {
                 day: '2-digit',
             });
 
-            // thumbnailLinkはセッション期限があり、静的エクスポートでは数時間でリンク切れになります。
-            // 永続的な表示のためには、共有済みのファイルIDを使って直接URLを生成します。
-            const imageUrl = `https://drive.google.com/uc?id=${file.id}`;
-
-            return {
-                id: file.id || Math.random().toString(),
+            galleryItems.push({
+                id: file.id,
                 title: title,
                 date: formattedDate,
-                imageUrl: imageUrl,
+                imageUrl: publicPath,
                 description: `${title}の施術事例です。`,
-            };
-        });
+            });
+        }
 
         return galleryItems;
     } catch (error) {
