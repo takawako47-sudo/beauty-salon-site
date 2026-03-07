@@ -59,17 +59,28 @@ async function getGalleryImages(): Promise<GalleryItem[]> {
             // ファイルがまだ存在しない場合のみダウンロード（ビルド時間の短縮）
             if (!fs.existsSync(filePath)) {
                 try {
-                    console.log(`Downloading image: ${file.name} (${file.id})`);
-                    // Google Drive APIで画像コンテンツを取得
-                    // NOTE: API Keyでファイルのバイナリを取得するには、別のエンドポイントかオプションが必要な場合があるため
-                    // 公開されている直URLからaxiosで取得する方式を試みます
+                    console.log(`[Gallery] Downloading image: ${file.name} (${file.id})`);
                     const downloadUrl = `https://drive.google.com/uc?id=${file.id}&export=download`;
-                    const response = await axios.get(downloadUrl, { responseType: 'arraybuffer' });
+
+                    const response = await axios.get(downloadUrl, {
+                        responseType: 'arraybuffer',
+                        headers: {
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                        }
+                    });
+
                     fs.writeFileSync(filePath, Buffer.from(response.data));
-                } catch (dlError) {
-                    console.error(`Failed to download ${file.id}:`, dlError);
+                    const stats = fs.statSync(filePath);
+                    console.log(`[Gallery] Successfully saved ${fileName} (${stats.size} bytes)`);
+                } catch (dlError: any) {
+                    console.error(`[Gallery] Failed to download ${file.id}:`, dlError.message);
+                    if (dlError.response) {
+                        console.error(`[Gallery] Status: ${dlError.response.status}`);
+                    }
                     continue; // 失敗した画像はスキップ
                 }
+            } else {
+                console.log(`[Gallery] Using existing image: ${fileName}`);
             }
 
             // タイトル抽出
