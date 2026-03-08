@@ -163,7 +163,7 @@ export default function ReservationSystem({ initialEvents }: ReservationSystemPr
                     ★★★★★
                 </div>
                 <a
-                    href="https://search.google.com/local/writereview?placeid=ChIJfXJuPhedQDUROFgrawG275E"
+                    href="https://search.google.com/local/writereview?placeid=ChIJt3J4PhedQDUROFg7ZqE275E"
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
