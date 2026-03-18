@@ -68,7 +68,7 @@ async function getInstagramImages(): Promise<GalleryItem[]> {
             const filePath = path.join(galleryDir, fileName);
 
             // GitHub Pages のサブパスを考慮したパス生成
-            const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+            const basePath = process.env.NODE_ENV === 'production' ? '/beauty-salon-site' : '';
             const publicPath = `${basePath}/gallery-images/${fileName}`;
 
             // ローカル保存（URLの有効期限対策）
