@@ -1,191 +1,34 @@
 "use client";
 
-import { useState } from "react";
-import { getAvailabilitySlots, AvailabilitySlot, CalendarEvent } from "@/lib/calendar";
+import React from "react";
 
-interface ReservationSystemProps {
-    initialEvents: CalendarEvent[];
-}
-
-export default function ReservationSystem({ initialEvents }: ReservationSystemProps) {
-    // 日付のみを管理するため、時刻を00:00:00に固定したDateオブジェクトを使用
-    const getStartOfDay = (date: Date) => {
-        const d = new Date(date.getTime());
-        d.setHours(0, 0, 0, 0);
-        return d;
-    };
-
-    const [selectedDate, setSelectedDate] = useState<Date>(getStartOfDay(new Date()));
-    const [showOnlyAvailable, setShowOnlyAvailable] = useState(false);
-
-    // 本日〜14日間
-    const today = getStartOfDay(new Date());
-    const dateList = Array.from({ length: 14 }, (_, i) => {
-        const d = new Date(today.getTime());
-        d.setDate(d.getDate() + i);
-        return d;
-    });
-
-    // 選択された日付のスロットを生成
-    const slots = getAvailabilitySlots(initialEvents, selectedDate);
-
-    // フィルタリング
-    const filteredSlots = showOnlyAvailable
-        ? slots.filter(s => s.status === 'available')
-        : slots;
-
-    const formatDate = (date: Date) => {
-        const month = date.getMonth() + 1;
-        const day = date.getDate();
-        const dayOfWeek = ["日", "月", "火", "水", "木", "金", "土"][date.getDay()];
-        return `${month}/${day}(${dayOfWeek})`;
-    };
-
-    const isSameDate = (d1: Date, d2: Date) => {
-        return d1.getFullYear() === d2.getFullYear() &&
-            d1.getMonth() === d2.getMonth() &&
-            d1.getDate() === d2.getDate();
-    };
-
+// Google Calendar Embed Iframe
+export default function ReservationSystem() {
     return (
         <div style={{ maxWidth: "800px", margin: "0 auto", backgroundColor: "#fff", padding: "30px", borderRadius: "10px", boxShadow: "0 4px 6px rgba(0,0,0,0.05)" }}>
-            <h1 style={{ fontSize: "1.8rem", marginBottom: "20px", color: "#333" }}>予約状況（空き状況）</h1>
+            <h1 style={{ fontSize: "1.8rem", marginBottom: "20px", color: "#333", textAlign: "center" }}>予約状況（空き状況）</h1>
 
-            {/* 日付選択タブ */}
-            <div style={{
-                display: "flex",
-                overflowX: "auto",
-                gap: "10px",
-                marginBottom: "30px",
-                paddingBottom: "10px",
-                borderBottom: "1px solid #eee",
-                WebkitOverflowScrolling: "touch"
-            }}>
-                {dateList.map((date, idx) => (
-                    <button
-                        key={idx}
-                        onClick={() => setSelectedDate(date)}
-                        style={{
-                            padding: "10px 15px",
-                            borderRadius: "20px",
-                            border: "1px solid",
-                            borderColor: isSameDate(date, selectedDate) ? "#d4a373" : "#eee",
-                            backgroundColor: isSameDate(date, selectedDate) ? "#d4a373" : "#fff",
-                            color: isSameDate(date, selectedDate) ? "#fff" : "#666",
-                            whiteSpace: "nowrap",
-                            cursor: "pointer",
-                            fontSize: "0.9rem",
-                            fontWeight: isSameDate(date, selectedDate) ? "bold" : "normal"
-                        }}
-                    >
-                        {formatDate(date)}
-                    </button>
-                ))}
+            <p style={{ textAlign: "center", marginBottom: "30px", fontSize: "0.95rem", color: "#666" }}>
+                以下のカレンダーから空き状況や定休日をご確認いただけます。<br />
+                ご予約やお問い合わせはLINEからお願いいたします。
+            </p>
+
+            {/* ① Googleカレンダー デフォルト埋め込み */}
+            <div style={{ position: "relative", paddingBottom: "75%", height: 0, overflow: "hidden", borderRadius: "8px", border: "1px solid #eee" }}>
+                <iframe
+                    src="https://calendar.google.com/calendar/embed?src=takawako47%40gmail.com&ctz=Asia%2FTokyo&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=1&showCalendars=0&showTz=0&mode=MONTH"
+                    style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: 0 }}
+                    width="100%"
+                    height="600"
+                    frameBorder="0"
+                    scrolling="no"
+                    title="予約状況カレンダー"
+                ></iframe>
             </div>
 
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-                <p style={{ fontSize: "1.1rem", fontWeight: "bold", color: "#444" }}>
-                    {selectedDate.getFullYear()}年{selectedDate.getMonth() + 1}月{selectedDate.getDate()}日の状況
-                </p>
-                <label style={{ fontSize: "0.9rem", color: "#666", cursor: "pointer", display: "flex", alignItems: "center" }}>
-                    <input
-                        type="checkbox"
-                        checked={showOnlyAvailable}
-                        onChange={(e) => setShowOnlyAvailable(e.target.checked)}
-                        style={{ marginRight: "5px" }}
-                    />
-                    空きのみ表示
-                </label>
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                {filteredSlots.length > 0 ? (
-                    filteredSlots.map((slot) => (
-                        <div
-                            key={slot.time}
-                            style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                padding: "15px 20px",
-                                borderRadius: "8px",
-                                border: "1px solid #eee",
-                                backgroundColor:
-                                    slot.status === "available"
-                                        ? "#effaf3" // 薄い緑
-                                        : slot.status === "holiday"
-                                            ? "#fffaf0" // ベージュ
-                                            : slot.status === "full"
-                                                ? "#fff5f5" // 薄い赤
-                                                : "#f5f5f5" // グレー
-                            }}
-                        >
-                            <span style={{ fontSize: "1.1rem", fontWeight: "600", color: "#444" }}>
-                                {slot.time}
-                            </span>
-
-                            <span
-                                style={{
-                                    fontSize: "1rem",
-                                    fontWeight: "bold",
-                                    color:
-                                        slot.status === "available"
-                                            ? "#2f855a"
-                                            : slot.status === "holiday"
-                                                ? "#c05621"
-                                                : slot.status === "full"
-                                                    ? "#c53030"
-                                                    : "#999"
-                                }}
-                            >
-                                {slot.label}
-                            </span>
-                        </div>
-                    ))
-                ) : (
-                    <p style={{ padding: "40px", color: "#999" }}>表示できる予約枠がありません。</p>
-                )}
-            </div>
-
-            {/* ② Google口コミ誘導セクション */}
+            {/* ② SNS & 予約相談セクション */}
             <div style={{
                 marginTop: "40px",
-                padding: "30px 20px",
-                backgroundColor: "#fffdf5", // 薄い黄色/ベージュ
-                border: "1px solid #f0e6d2",
-                borderRadius: "10px",
-                textAlign: "center"
-            }}>
-                <p style={{ fontSize: "1.1rem", fontWeight: "bold", color: "#666", marginBottom: "10px" }}>
-                    本日はありがとうございました！励みになります
-                </p>
-                <div style={{ fontSize: "2.5rem", color: "#fbbc04", letterSpacing: "5px", marginBottom: "15px" }}>
-                    ★★★★★
-                </div>
-                <a
-                    href="https://search.google.com/local/writereview?placeid=ChIJt3J4PhedQDUROFg7ZqE275E"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                        display: "inline-block",
-                        padding: "15px 30px",
-                        backgroundColor: "#fff",
-                        color: "#333",
-                        textDecoration: "none",
-                        borderRadius: "30px",
-                        fontWeight: "bold",
-                        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                        border: "1px solid #eee",
-                        fontSize: "1rem"
-                    }}
-                >
-                    星だけでも励みになります！Google口コミを書く
-                </a>
-            </div>
-
-            {/* ③ SNS & 予約相談セクション */}
-            <div style={{
-                marginTop: "30px",
                 display: "flex",
                 flexDirection: "column",
                 gap: "15px"
