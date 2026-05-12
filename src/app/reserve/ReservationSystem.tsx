@@ -32,22 +32,6 @@ export default function ReservationSystem() {
         ></iframe>
       </div>
 
-      {/* 住所・電話番号カード（1回のみ） */}
-      <div style={{
-        marginTop: "30px",
-        padding: "20px",
-        backgroundColor: "#f9f9f9",
-        borderRadius: "10px",
-        border: "1px solid #eee",
-        textAlign: "center",
-        color: "#555",
-        lineHeight: "1.8"
-      }}>
-        <p style={{ fontWeight: "bold", fontSize: "1.05rem", color: "#333", marginBottom: "6px" }}>{salonInfo.name}</p>
-        <p>住所: {salonInfo.address}</p>
-        <p>TEL: {salonInfo.tel}</p>
-      </div>
-
       {/* SNS ＆ 予約ボタンセクション */}
       <div style={{
         marginTop: "30px",
