@@ -1,7 +1,7 @@
 const { google } = require('googleapis');
 
-const apiKey = 'AIzaSyClK79MRAgeEAxvlMdsFbPcYacde6zroUI';
-const folderId = '1r1AWR-fQyGQ7KM_hD6MhItLHwg4mSCes';
+const apiKey = process.env.GOOGLE_API_KEY;
+const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID || '1r1AWR-fQyGQ7KM_hD6MhItLHwg4mSCes';
 
 async function testDrive() {
     try {
