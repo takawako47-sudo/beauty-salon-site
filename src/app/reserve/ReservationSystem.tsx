@@ -41,7 +41,7 @@ export default function ReservationSystem() {
       }}>
         {/* LINE ボタン */}
         <a
-          href="https://line.me/ti/p/W_VCXFY3ou"
+          href={process.env.NEXT_PUBLIC_LINE_URL}
           target="_blank"
           rel="noopener noreferrer"
           style={{
